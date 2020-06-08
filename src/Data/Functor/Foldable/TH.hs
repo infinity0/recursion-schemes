@@ -308,14 +308,15 @@ substType a b = go
     go (VarT n)             = ((False, []), VarT n)
     go (AppT l r)           =
         let ((br, cr), tr) = go r
-            cr' = if br && hasTyVar l
+            ((bl, cl), tl) = go l
+            c = if br && hasTyVar tl
 #if MIN_VERSION_template_haskell(2,10,0)
-                then AppT (ConT functorTypeName) l : cr
+                then [AppT (ConT functorTypeName) tl]
 #else
-                then ClassP functorTypeName [l] : cr
+                then [ClassP functorTypeName [tl]]
 #endif
-                else cr
-        in ((br, cr'), AppT l tr)
+                else []
+        in ((bl || br, c ++ cl ++ cr), AppT tl tr)
     go (ForallT xs ctx t)   = ForallT xs ctx <$> go t
 #if MIN_VERSION_template_haskell(2,16,0)
     go (ForallVisT xs t)    = ForallVisT xs <$> go t
